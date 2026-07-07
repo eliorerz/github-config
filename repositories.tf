@@ -286,6 +286,19 @@ module "repo_osac_ux" {
       permission = "push"
     }
   ]
+  users = [
+    {
+      username   = "liatb-rh"
+      permission = "admin"
+    }
+  ]
+  pages = {
+    build_type = "legacy"
+    source = {
+      branch = "0.1"
+      path   = "/"
+    }
+  }
 }
 
 module "repo_host_management_openstack" {
