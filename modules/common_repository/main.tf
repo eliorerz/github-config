@@ -159,9 +159,13 @@ resource "github_repository_ruleset" "status_checks" {
     }
 
     required_status_checks {
-      # When merge queue is enabled, strict is unnecessary — the queue tests
-      # each PR against latest main before merging.
-      strict_required_status_checks_policy = var.merge_queue != null ? false : true
+      # Merge queue only re-validates checks that actually listen for
+      # merge_group (e.g. unit tests, lint) against its rebased ref -- checks
+      # without that trigger (e.g. the e2e-*-gate checks) keep whatever
+      # result they last posted on the PR's own head SHA. Without strict,
+      # main can drift out from under a stale-but-still-green PR (e.g. a
+      # paired osac/osac-test-infra change lands) and it merges anyway.
+      strict_required_status_checks_policy = true
 
       dynamic "required_check" {
         for_each = var.required_status_checks
