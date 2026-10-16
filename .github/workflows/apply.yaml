@@ -130,7 +130,7 @@ jobs:
       #
       # A permanent per-module `-target` loop was considered and rejected:
       # several modules share cross-module resources (e.g.
-      # github_team.all["wg-infra"], referenced by ruleset_bypass_team_ids
+      # github_team.all["managers"], referenced by ruleset_bypass_team_ids
       # in multiple repo modules), so looping per module would re-plan/
       # re-apply those shared resources on every iteration that references
       # them -- wasteful, and it gives up Terraform's normal whole-graph

@@ -10,7 +10,7 @@ resource "github_organization_settings" "osac-project" {
   members_can_create_repositories         = false
 }
 
-# Lets wg-infra manage self-hosted runners/runner groups at the org level
+# Lets managers manage self-hosted runners/runner groups at the org level
 # (register/remove runners, create runner groups, control repo access to
 # them) without granting full org-owner access. base_role defaults to
 # "none", so this role carries only the permission listed below.
@@ -23,12 +23,12 @@ resource "github_organization_role" "runner_manager" {
   ]
 }
 
-resource "github_organization_role_team" "runner_manager_wg_infra" {
+resource "github_organization_role_team" "runner_manager_managers" {
   role_id   = github_organization_role.runner_manager.role_id
-  team_slug = github_team.all["wg-infra"].slug
+  team_slug = github_team.all["managers"].slug
 }
 
-# Assign GitHub's predefined "CI/CD admin" organization role to the infrastructure
+# Assign GitHub's predefined "CI/CD admin" organization role to the ci-duty
 # team. It grants admin access to Actions policies, runners, runner groups, hosted
 # compute network configs, secrets, variables, and usage metrics for the org -- a
 # superset of the runner-manager role above -- without granting org-owner access.
@@ -49,7 +49,7 @@ locals {
   ])
 }
 
-resource "github_organization_role_team" "cicd_admin_infrastructure" {
+resource "github_organization_role_team" "cicd_admin_ci_duty" {
   role_id   = local.cicd_admin_role_id
-  team_slug = github_team.all["infrastructure"].slug
+  team_slug = github_team.all["ci-duty"].slug
 }

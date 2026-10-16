@@ -20,16 +20,26 @@ When a commit is pushed to the `main` branch (e.g., when a pull request merges),
 ### Add a new team?
 
 1. Open `teams.csv`
-1. Add a new row of the form `<team_name>,<description>,<privacy>`, where `<privacy>` can be either `closed` (visible to all members of the organization) or `secret` (visible to organization owners and members of this team)
+1. Add a new row of the form `<team_name>,<description>,<privacy>,<contributor>`, where `<privacy>` can be either `closed` (visible to all members of the organization) or `secret` (visible to organization owners and members of this team).
+   Set `<contributor>` to `true` to give the team push access on every repository that uses `local.contributor_teams` in `repositories.tf` (the working group teams), or `false` otherwise.
 
 ### Add an organization member to a team?
 
 1. Open `team-members/<team>.csv`
 1. Add a new line of the form `<username>,<role>`, where `<role>` should be `member`.
 
+Which team? Teams follow the OSAC engineering roster:
+
+- `wg-*`: one team per working group (for example `wg-core`, `wg-bmaas`, `wg-infra`).
+  Working group teams have push access to the OSAC repositories.
+- `contributors`: people who contribute but aren't in a working group. Same push access.
+- `managers`, `architects`, `wg-leads`: role teams across all working groups. `managers`
+  also has admin on the main repositories and ruleset bypass (see below).
+- `ci-duty`: CI duty and merge assistance (see below).
+
 ### Give someone runner management or merge-queue bypass without making them an org owner?
 
-Add them to the `infrastructure` team (`team-members/infrastructure.csv`). That team:
+Add them to the `ci-duty` team (`team-members/ci-duty.csv`). That team:
 
 - Holds GitHub's predefined **CI/CD admin** organization role, granting management of
   org self-hosted runners and runner groups (plus Actions policies, secrets, variables,
@@ -38,9 +48,8 @@ Add them to the `infrastructure` team (`team-members/infrastructure.csv`). That 
   the merge queue and required status checks on those repos. See `ruleset_bypass_team_ids`
   in `repositories.tf`.
 
-The broader `wg-infra` working group keeps the narrower `runner-manager` role and the same
-bypass; `infrastructure` is a smaller team for people who need this without the rest of the
-working-group context.
+The `managers` team holds the narrower `runner-manager` role, admin on the main
+repositories, and ruleset bypass on every repository with required status checks.
 
 ### Add a new repository?
 

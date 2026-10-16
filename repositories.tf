@@ -1,3 +1,14 @@
+locals {
+  # Teams flagged "contributor" in teams.csv get push access on every
+  # repository that uses this list. Iterating github_team.all (rather than
+  # the CSV) makes the repositories wait for the teams to exist.
+  contributor_teams = [
+    for name, team in github_team.all : team.name
+    if local.teams_csv[name].contributor == "true"
+  ]
+  teams_csv = { for team in csvdecode(file("teams.csv")) : team.name => team }
+}
+
 module "repo_issues" {
   source                 = "./modules/common_repository"
   name                   = "issues"
@@ -42,15 +53,12 @@ module "repo_github_config" {
   required_status_checks = [
     { context = "pre-commit", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
 
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
@@ -78,25 +86,15 @@ module "repo_managed_cluster_config" {
   name                = "managed-cluster-config"
   use_public_template = false
   description         = "Configuration for OpenShift cluster running ACM w/ Hosted Control Planes"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  contributor_teams   = local.contributor_teams
 }
 
 module "repo_managed_cluster_apps" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "managed-cluster-apps"
-  description = "Argocd apps to deploy resources on the innabox cluster"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "managed-cluster-apps"
+  description       = "Argocd apps to deploy resources on the innabox cluster"
+  contributor_teams = local.contributor_teams
 }
 
 module "repo_fulfillment_service" {
@@ -105,15 +103,12 @@ module "repo_fulfillment_service" {
   name        = "fulfillment-service"
   description = "Cloud-in-a-box fulfillment service"
   # Merged into osac mono-repo (OSAC-1732/OSAC-1733); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
@@ -121,8 +116,8 @@ module "repo_fulfillment_service" {
   required_status_checks = [
     { context = "e2e-vmaas-full-install / e2e", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
-  push_allowances         = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
+  push_allowances         = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
   environments            = [{ name = "e2e-test" }]
   pages = {
     build_type = "workflow"
@@ -141,17 +136,14 @@ module "repo_osac" {
   # Always show "Update branch" (merge or rebase). The merge queue does not
   # require up-to-date branches, so GitHub otherwise hides the button.
   allow_update_branch = true
+  contributor_teams   = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     },
     {
-      team_id    = "infrastructure"
+      team_id    = github_team.all["ci-duty"].name
       permission = "push"
     },
     {
@@ -198,8 +190,8 @@ module "repo_osac" {
     { context = "Run unit tests (bare-metal-fulfillment-operator)", integration_id = 15368 },
   ]
   ruleset_bypass_team_ids = [
-    github_team.all["wg-infra"].id,
-    github_team.all["infrastructure"].id,
+    github_team.all["managers"].id,
+    github_team.all["ci-duty"].id,
   ]
 
   # osac-release/* tags trigger a Konflux staging release (see
@@ -232,15 +224,12 @@ module "repo_cloudkit_operator" {
   name        = "osac-operator"
   description = "OSAC kubernetes operator"
   # Merged into osac mono-repo (OSAC-1732/OSAC-1733); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
@@ -248,8 +237,8 @@ module "repo_cloudkit_operator" {
   required_status_checks = [
     { context = "e2e-vmaas-full-install / e2e", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
-  push_allowances         = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
+  push_allowances         = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
   environments            = [{ name = "e2e-test" }]
 }
 
@@ -259,15 +248,12 @@ module "repo_cloudkit_aap" {
   name        = "osac-aap"
   description = "OSAC AAP configuration and playbooks"
   # Merged into osac mono-repo (OSAC-1732/OSAC-1733); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
@@ -275,35 +261,25 @@ module "repo_cloudkit_aap" {
   required_status_checks = [
     { context = "e2e-vmaas-full-install / e2e", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
-  push_allowances         = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
+  push_allowances         = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
   environments            = [{ name = "e2e-test" }]
 }
 
 module "repo_cloudkit_aap_ee" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-aap-ee"
-  description = "OSAC execution environment for AAP"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-aap-ee"
+  description       = "OSAC execution environment for AAP"
+  contributor_teams = local.contributor_teams
 }
 
 module "repo_cloudkit_operator_config" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-operator-config"
-  description = "Configuration for our deployment of the OSAC operator"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-operator-config"
+  description       = "Configuration for our deployment of the OSAC operator"
+  contributor_teams = local.contributor_teams
 }
 
 module "repo_osac_installer" {
@@ -312,15 +288,12 @@ module "repo_osac_installer" {
   name        = "osac-installer"
   description = "Integration repository for installing all OSAC components"
   # Merged into osac mono-repo (OSAC-1732/OSAC-1733); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
@@ -330,8 +303,8 @@ module "repo_osac_installer" {
   ]
 
   required_approvals      = null
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
-  push_allowances         = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
+  push_allowances         = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
   environments            = [{ name = "e2e-test" }]
 }
 
@@ -353,7 +326,7 @@ module "repo_enhancement_proposals" {
     # Job id in enhancement-proposals/.github/workflows/pre-commit.yaml.
     { context = "pre-commit", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
   teams = [
     {
       team_id    = "wg-osac-storage"
@@ -363,21 +336,18 @@ module "repo_enhancement_proposals" {
 }
 
 module "repo_osac_test_infra" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-test-infra"
-  description = "Ansible-based test infrastructure for OSAC end-to-end testing"
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-test-infra"
+  description       = "Ansible-based test infrastructure for OSAC end-to-end testing"
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     },
     {
-      team_id    = "infrastructure"
+      team_id    = github_team.all["ci-duty"].name
       permission = "push"
     },
     {
@@ -397,8 +367,8 @@ module "repo_osac_test_infra" {
     { context = "pre-commit", integration_id = 15368 },
   ]
   ruleset_bypass_team_ids = [
-    github_team.all["wg-infra"].id,
-    github_team.all["infrastructure"].id,
+    github_team.all["managers"].id,
+    github_team.all["ci-duty"].id,
   ]
   environments = [{ name = "e2e-test" }]
 
@@ -425,8 +395,12 @@ module "repo_osac_ci" {
   allow_update_branch = true
   teams = [
     {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
+    },
+    {
+      team_id    = "wg-infra"
+      permission = "push"
     }
   ]
   # The planner can eventually decide what merges in other repositories, so
@@ -441,20 +415,15 @@ module "repo_osac_ci" {
     { context = "unit-tests", integration_id = 15368 },
     { context = "legacy-differential", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["wg-infra"].id]
+  ruleset_bypass_team_ids = [github_team.all["managers"].id]
 }
 
 module "repo_massopencloud_templates" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-massopencloud-templates"
-  description = "OSAC MOC-specific templates"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-massopencloud-templates"
+  description       = "OSAC MOC-specific templates"
+  contributor_teams = local.contributor_teams
 }
 
 module "repo_osac_ui" {
@@ -463,13 +432,10 @@ module "repo_osac_ui" {
   name        = "osac-ui"
   description = "OSAC UI Web Console"
   # Merged into osac mono-repo, with full commit history preserved; archived.
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
     {
       team_id    = "wg-osac-storage"
       permission = "push"
@@ -478,16 +444,11 @@ module "repo_osac_ui" {
 }
 
 module "repo_osac_ux" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-ux"
-  description = "OSAC UX Roadmap Console"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-ux"
+  description       = "OSAC UX Roadmap Console"
+  contributor_teams = local.contributor_teams
   users = [
     {
       username   = "liatb-rh"
@@ -509,14 +470,9 @@ module "repo_host_management_openstack" {
   name        = "host-management-openstack"
   description = "[Archived] OSAC Host Management Operator for OpenStack"
   # archived (OSAC-3445)
-  archived    = true
-  lock_branch = true
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
 }
 
 module "repo_bare_metal_operator" {
@@ -525,32 +481,24 @@ module "repo_bare_metal_operator" {
   name        = "bare-metal-fulfillment-operator"
   description = "OSAC Operator for Bare Metal Fulfillment"
   # Merged into osac mono-repo (OSAC-1732/OSAC-3395); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
-  push_allowances = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  push_allowances = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
 }
 
 module "repo_osac_workspace" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "osac-workspace"
-  description = "Workspace for operating on OSAC repositories with AI tooling"
-  teams = [
-    {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    }
-  ]
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "osac-workspace"
+  description       = "Workspace for operating on OSAC repositories with AI tooling"
+  contributor_teams = local.contributor_teams
   pages = {
     build_type = "workflow"
     source = {
@@ -561,21 +509,18 @@ module "repo_osac_workspace" {
 }
 
 module "repo_cluster_tool" {
-  source      = "./modules/common_repository"
-  visibility  = "public"
-  name        = "cluster-tool"
-  description = "Instant OpenShift SNO clusters from snapshots, distributed as OCI images"
+  source            = "./modules/common_repository"
+  visibility        = "public"
+  name              = "cluster-tool"
+  description       = "Instant OpenShift SNO clusters from snapshots, distributed as OCI images"
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
-  push_allowances = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  push_allowances = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
 }
 
 module "repo_osac_csi_driver" {
@@ -584,19 +529,16 @@ module "repo_osac_csi_driver" {
   name        = "osac-csi-driver"
   description = "OSAC CSI driver for persistent storage"
   # Merged into osac mono-repo (OSAC-1732/OSAC-3530); archived (OSAC-1737).
-  archived    = true
-  lock_branch = true
+  archived          = true
+  lock_branch       = true
+  contributor_teams = local.contributor_teams
   teams = [
     {
-      team_id    = "fulfillment-wg"
-      permission = "push"
-    },
-    {
-      team_id    = "wg-infra"
+      team_id    = github_team.all["managers"].name
       permission = "admin"
     }
   ]
   required_approvals = null
-  push_allowances    = ["/openshift-merge-robot", "osac-project/wg-infra", "osac-project/org-admins"]
+  push_allowances    = ["/openshift-merge-robot", "osac-project/${github_team.all["managers"].name}", "osac-project/org-admins"]
   environments       = [{ name = "e2e-test" }]
 }

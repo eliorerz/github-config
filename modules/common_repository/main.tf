@@ -294,15 +294,17 @@ resource "github_repository_collaborators" "repo_collaborators" {
     permission = var.all_members_permission
   }
 
-  # Generate team blocks from the value of the "teams" input variable.
+  # Generate team blocks from the "contributor_teams" (push) and "teams"
+  # input variables. An explicit "teams" entry overrides the contributor
+  # push permission for the same team.
   dynamic "team" {
-    for_each = {
-      for team in var.teams :
-      team.team_id => team
-    }
+    for_each = merge(
+      { for team_id in var.contributor_teams : team_id => "push" },
+      { for team in var.teams : team.team_id => team.permission },
+    )
     content {
-      team_id    = team.value.team_id
-      permission = team.value.permission
+      team_id    = team.key
+      permission = team.value
     }
   }
 

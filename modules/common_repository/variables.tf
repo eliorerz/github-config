@@ -94,6 +94,12 @@ variable "teams" {
   }
 }
 
+variable "contributor_teams" {
+  description = "Teams granted push access to this repository. An entry in \"teams\" for the same team overrides this permission."
+  type        = list(string)
+  default     = []
+}
+
 variable "users" {
   description = "Users with access to this repository"
   type = list(object({
