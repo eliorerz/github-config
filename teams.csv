@@ -4,7 +4,7 @@ observability-wg,observability working group,secret,false
 personas-wg,Personas working group,secret,false
 documentation-wg,Documentation working group,secret,false
 wg-infra,OSAC Infrastructure working group,closed,true
-wg-osac-storage,OSAC Storage working group,closed,true
+wg-storage,OSAC Storage working group,closed,true
 managers,OSAC working group managers,closed,true
 architects,Architects across all OSAC working groups,closed,true
 wg-leads,Leads of the OSAC working groups,closed,true

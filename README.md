@@ -30,7 +30,7 @@ When a commit is pushed to the `main` branch (e.g., when a pull request merges),
 
 Which team? Teams follow the OSAC engineering roster:
 
-- `wg-*`: one team per working group (for example `wg-core`, `wg-bmaas`, `wg-infra`).
+- `wg-*`: one team per working group (for example `wg-core`, `wg-storage`, `wg-infra`).
   Working group teams have push access to the OSAC repositories.
 - `contributors`: people who contribute but aren't in a working group. Same push access.
 - `managers`, `architects`, `wg-leads`: role teams across all working groups. `managers`

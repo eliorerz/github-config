@@ -145,10 +145,6 @@ module "repo_osac" {
     {
       team_id    = github_team.all["ci-duty"].name
       permission = "push"
-    },
-    {
-      team_id    = "wg-osac-storage"
-      permission = "push"
     }
   ]
   # Prow plugins handle approval via OWNERS (lgtm/approved labels), not native
@@ -327,12 +323,6 @@ module "repo_enhancement_proposals" {
     { context = "pre-commit", integration_id = 15368 },
   ]
   ruleset_bypass_team_ids = [github_team.all["managers"].id]
-  teams = [
-    {
-      team_id    = "wg-osac-storage"
-      permission = "push"
-    }
-  ]
 }
 
 module "repo_osac_test_infra" {
@@ -348,10 +338,6 @@ module "repo_osac_test_infra" {
     },
     {
       team_id    = github_team.all["ci-duty"].name
-      permission = "push"
-    },
-    {
-      team_id    = "wg-osac-storage"
       permission = "push"
     }
   ]
@@ -435,12 +421,6 @@ module "repo_osac_ui" {
   archived          = true
   lock_branch       = true
   contributor_teams = local.contributor_teams
-  teams = [
-    {
-      team_id    = "wg-osac-storage"
-      permission = "push"
-    }
-  ]
 }
 
 module "repo_osac_ux" {
