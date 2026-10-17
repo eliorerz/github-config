@@ -9,7 +9,7 @@ wg-storage,OSAC Storage working group,closed,true
 managers,OSAC working group managers,closed,true
 architects,Architects across all OSAC working groups,closed,true
 wg-leads,Leads of the OSAC working groups,closed,true
-ci-duty,CI duty and merge assistance - bypass on osac and osac-test-infra and CI/CD admin,closed,false
+ci-duty,CI duty and merge assistance - force-merge on osac osac-test-infra and enhancement-proposals and CI/CD admin,closed,false
 contributors,OSAC contributors outside the working groups,closed,true
 wg-architecture,OSAC Architecture working group,closed,true
 wg-bmaas,OSAC BMaaS working group,closed,true

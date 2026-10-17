@@ -103,6 +103,7 @@ resource "github_branch_protection" "repo_protection" {
       required_approving_review_count = var.required_approvals
       require_code_owner_reviews      = var.require_code_owner_reviews
       dismiss_stale_reviews           = var.dismiss_stale_reviews
+      pull_request_bypassers          = var.pull_request_bypassers
     }
   }
 

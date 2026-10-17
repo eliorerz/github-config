@@ -47,9 +47,12 @@ Add them to the `ci-duty` team (`team-members/ci-duty.csv`). That team:
 - Holds GitHub's predefined **CI/CD admin** organization role, granting management of
   org self-hosted runners and runner groups (plus Actions policies, secrets, variables,
   and usage metrics). See `organization.tf`.
-- Is a ruleset bypass actor on `osac` and `osac-test-infra`, so its members can bypass
-  the merge queue and required status checks on those repos. See `ruleset_bypass_team_ids`
-  in `repositories.tf`.
+- Can force-merge ("Merge without waiting for requirements to be met") on `osac`,
+  `osac-test-infra` and `enhancement-proposals`: it is a ruleset bypass actor there
+  (`ruleset_bypass_team_ids`), so its members can bypass the merge queue and required status
+  checks, and on `osac` it may also bypass the required reviews (`pull_request_bypassers`).
+  GitHub shows that checkbox only to someone who can bypass every rule on the branch. See
+  `repositories.tf`.
 
 The `managers` team holds the narrower `runner-manager` role, admin on the main
 repositories, and ruleset bypass on every repository with required status checks.

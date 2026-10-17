@@ -154,6 +154,9 @@ module "repo_osac" {
   # A path listed in CODEOWNERS needs approval from its owner team (today the CI definition under .github/; a team adds
   # its own folders by a pull request to CODEOWNERS), and a path with no owner needs nobody in particular.
   require_code_owner_reviews = true
+  # ci-duty can force-merge ("Merge without waiting for requirements to be met"): that needs a bypass of these review
+  # requirements as well as of the ci-status-checks ruleset below. Admins (managers) bypass them already.
+  pull_request_bypassers = ["osac-project/${github_team.all["ci-duty"].name}"]
   # Three required checks. `CI` is the one job that adds up every cheap check that applies to the change (ci.yml; a part
   # that does not apply is skipped inside it) and `jira-reference` says the title names a Jira issue or NO-ISSUE (the
   # Prow-set label jira/valid-reference); both are posted by GitHub Actions. `E2E` is the full-install suites on a real
@@ -301,7 +304,10 @@ module "repo_enhancement_proposals" {
     # Job id in enhancement-proposals/.github/workflows/pre-commit.yaml.
     { context = "pre-commit", integration_id = 15368 },
   ]
-  ruleset_bypass_team_ids = [github_team.all["managers"].id]
+  ruleset_bypass_team_ids = [
+    github_team.all["managers"].id,
+    github_team.all["ci-duty"].id,
+  ]
 }
 
 module "repo_osac_test_infra" {

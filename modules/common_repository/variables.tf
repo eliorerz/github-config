@@ -26,6 +26,12 @@ variable "require_code_owner_reviews" {
   default     = false
 }
 
+variable "pull_request_bypassers" {
+  description = "Actors allowed to merge without the required pull request reviews (including code owner reviews). Only has an effect when required_approvals is not null. Actor names must begin with '/' for users or 'org-name/' for teams."
+  type        = list(string)
+  default     = []
+}
+
 variable "dismiss_stale_reviews" {
   description = "Dismiss approving reviews when new commits are pushed. Only has an effect when required_approvals is not null."
   type        = bool
