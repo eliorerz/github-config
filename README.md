@@ -36,6 +36,9 @@ Which team? Teams follow the OSAC engineering roster:
 - `managers`, `architects`, `wg-leads`: role teams across all working groups. `managers`
   also has admin on the main repositories and ruleset bypass (see below).
 - `ci-duty`: CI duty and merge assistance (see below).
+- `fulfillment-wg`: legacy team with no repository access. It is kept only because the
+  hypershift1 cluster (`osac-project/managed-cluster-config`) uses it for OAuth login,
+  RBAC, ArgoCD and Vault. Don't add people to it for repository access.
 
 ### Give someone runner management or merge-queue bypass without making them an org owner?
 

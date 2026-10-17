@@ -1,5 +1,6 @@
 name,description,privacy,contributor
 org-admins,Organization Administrators,secret,false
+fulfillment-wg,Fulfillment working group,secret,false
 observability-wg,observability working group,secret,false
 personas-wg,Personas working group,secret,false
 documentation-wg,Documentation working group,secret,false
