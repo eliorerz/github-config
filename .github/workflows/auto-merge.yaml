@@ -2,37 +2,49 @@ name: Auto-merge
 
 # A pull request merges by itself once everything it needs is there: the approval of the owner (github-config-owners), of the
 # team whose member file it changes (CODEOWNERS), the other approvals and the checks. This turns on GitHub's auto-merge for
-# every pull request that is not a draft; GitHub then merges it the moment the rules are met, and not before. The rules are
-# the branch protection and the rulesets (repositories.tf), which a new commit resets (stale approvals are dismissed).
+# every pull request to the default branch that is not a draft, each time pre-commit has run for it; GitHub then merges it
+# the moment the rules are met, and not before. The rules are the branch protection and the rulesets (repositories.tf), which
+# a new commit resets (stale approvals are dismissed).
 #
-# It runs from the default branch (pull_request_target) and checks out nothing of the pull request. The merge is made with
-# the token of this workflow, which starts no other workflow (apply.yaml runs on its schedule, every 4 hours, or by hand).
+# It runs when pre-commit ends, from the default branch, and runs nothing of the pull request (pull_request_target, which
+# GitHub blocks by default in public repositories from 2 December 2026, is not used). It is a run of the default branch, so
+# it adds no row to a pull request. The merge is made with the token of this workflow, which starts no other workflow
+# (apply.yaml runs on its schedule, every 4 hours, or by hand).
 on:  # zizmor: ignore[dangerous-triggers] -- nothing of the pull request is checked out or run
-  pull_request_target:
-    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_run:
+    workflows: [pre-commit]
+    types: [completed]
 
 permissions: {}
 
 jobs:
   auto-merge:
     name: Enable auto-merge
-    if: ${{ !github.event.pull_request.draft }}
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Turn on auto-merge
+      - name: Turn on auto-merge for the pull request of this commit
         env:
           GH_TOKEN: ${{ github.token }}
-          NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BASE: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
-          [[ "${NUMBER}" =~ ^[0-9]+$ ]] || { echo "::error::The pull request number must be digits only." >&2; exit 1; }
-          if [[ "$(gh pr view "${NUMBER}" --repo "${REPO}" --json autoMergeRequest --jq '.autoMergeRequest != null')" == "true" ]]; then
-            echo "Auto-merge is already on for #${NUMBER}"
-            exit 0
-          fi
-          gh pr merge "${NUMBER}" --repo "${REPO}" --auto --squash
+          [[ "${SHA}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::The commit must be 40 lower-case hexadecimal digits." >&2; exit 1; }
+          # The open pull requests to the default branch whose head is this commit (found by the commit: the run itself does not list a fork pull request).
+          numbers=$(gh api "repos/${REPO}/commits/${SHA}/pulls" \
+            | jq -r --arg base "${BASE}" '.[] | select(.state == "open" and .base.ref == $base) | .number')
+          for number in ${numbers}; do
+            [[ "${number}" =~ ^[0-9]+$ ]] || continue
+            view=$(gh pr view "${number}" --repo "${REPO}" --json isDraft,autoMergeRequest,headRefOid)
+            if jq -e --arg sha "${SHA}" '.isDraft or (.autoMergeRequest != null) or (.headRefOid != $sha)' <<<"${view}" >/dev/null; then
+              echo "#${number}: a draft, or auto-merge is already on, or it moved on to another commit"
+              continue
+            fi
+            gh pr merge "${number}" --repo "${REPO}" --auto --squash
+          done
