@@ -26,7 +26,7 @@ When a commit is pushed to the `main` branch (e.g., when a pull request merges),
 
 ### Who approves a change to this repository?
 
-- Every pull request needs an approval of `github-config-owners` (a team of one person, `team-members/github-config-owners.csv`): the ruleset `owner-review` in `repositories.tf`. The author of a pull request cannot approve it, so a pull request of an owner is approved by someone else, or merged by an organization admin who bypasses the ruleset.
+- Every pull request to the default branch needs an approval of `github-config-owners` (a team of one person, `team-members/github-config-owners.csv`): the ruleset `owner-review` in `repositories.tf`. The author of a pull request cannot approve it, so a pull request of an owner is approved by someone else, or merged by an organization admin who bypasses the ruleset.
 - A change to `team-members/<team>.csv` also needs an approval from that team (`CODEOWNERS`), so that a team decides who joins it. A team that is secret or has no access to this repository cannot be a code owner (`fulfillment-wg`, `observability-wg`, `personas-wg`, `documentation-wg`, `org-admins`, `ci-duty`): its file has no rule and needs only the owners' approval.
 - When you add a team to `teams.csv` with `contributor` set to `true` and a `closed` privacy, add a line for its file to `CODEOWNERS` (`/team-members/<team>.csv @osac-project/<team>`).
 

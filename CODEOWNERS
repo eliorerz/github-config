@@ -5,8 +5,8 @@
 # (the contributor teams of teams.csv). A team that cannot be an owner (secret, or without access) has no rule here, and its
 # file needs only the owners' approval: ci-duty, documentation-wg, fulfillment-wg, observability-wg, org-admins, personas-wg.
 #
-# Every pull request also needs an approval of github-config-owners (the ruleset "owner-review" in repositories.tf), which
-# CODEOWNERS cannot say: it takes one owner per path, not two.
+# Every pull request to the default branch also needs an approval of github-config-owners (the ruleset "owner-review" in
+# repositories.tf), which CODEOWNERS cannot say: it takes one owner per path, not two.
 
 /team-members/architects.csv @osac-project/architects
 /team-members/contributors.csv @osac-project/contributors
