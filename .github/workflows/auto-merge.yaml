@@ -1,0 +1,38 @@
+name: Auto-merge
+
+# A pull request merges by itself once everything it needs is there: the approval of the owner (github-config-owners), of the
+# team whose member file it changes (CODEOWNERS), the other approvals and the checks. This turns on GitHub's auto-merge for
+# every pull request that is not a draft; GitHub then merges it the moment the rules are met, and not before. The rules are
+# the branch protection and the rulesets (repositories.tf), which a new commit resets (stale approvals are dismissed).
+#
+# It runs from the default branch (pull_request_target) and checks out nothing of the pull request. The merge is made with
+# the token of this workflow, which starts no other workflow (apply.yaml runs on its schedule, every 4 hours, or by hand).
+on:  # zizmor: ignore[dangerous-triggers] -- nothing of the pull request is checked out or run
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Turn on auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          [[ "${NUMBER}" =~ ^[0-9]+$ ]] || { echo "::error::The pull request number must be digits only." >&2; exit 1; }
+          if [[ "$(gh pr view "${NUMBER}" --repo "${REPO}" --json autoMergeRequest --jq '.autoMergeRequest != null')" == "true" ]]; then
+            echo "Auto-merge is already on for #${NUMBER}"
+            exit 0
+          fi
+          gh pr merge "${NUMBER}" --repo "${REPO}" --auto --squash

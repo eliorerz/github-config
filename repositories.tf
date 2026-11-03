@@ -49,14 +49,17 @@ module "repo_github_config" {
   name                = "github-config"
   description         = "Repository for managing osac-project github organization"
   use_public_template = false
-  required_approvals  = 2
+  required_approvals  = 1
   required_status_checks = [
     { context = "pre-commit", integration_id = 15368 },
   ]
   ruleset_bypass_team_ids = [github_team.all["managers"].id]
 
-  # An approval of a code owner is needed where CODEOWNERS names one (a team file needs its team, see CODEOWNERS).
+  # An approval of a code owner is needed where CODEOWNERS names one (a team file needs its team, see CODEOWNERS), and every
+  # pull request needs the owner (the ruleset below). Pull requests merge by themselves once approved (see
+  # .github/workflows/auto-merge.yaml), so a new commit must drop the approvals: nothing reviewed may change afterwards.
   require_code_owner_reviews = true
+  dismiss_stale_reviews      = true
 
   contributor_teams = local.contributor_teams
   teams = [
@@ -98,6 +101,7 @@ resource "github_repository_ruleset" "github_config_owner_review" {
   rules {
     pull_request {
       required_approving_review_count = 0
+      dismiss_stale_reviews_on_push   = true
 
       required_reviewers {
         minimum_approvals = 1
