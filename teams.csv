@@ -24,3 +24,4 @@ wg-ui,OSAC UI working group,closed,true,true
 wg-e2e,OSAC E2E working group,closed,true,true
 wg-soln-eng,OSAC Solution Engineering working group,closed,true,true
 wg-qe,OSAC QE working group,closed,true,true
+github-config-owners,Approves every pull request to github-config,closed,false,false

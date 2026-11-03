@@ -1,0 +1,29 @@
+# CODEOWNERS of github-config.
+#
+# A change to the member file of a team needs an approval from that team (any member except the author), so a team decides
+# who joins it. The team must be visible (closed) and have write access to this repository, which the teams below have
+# (the contributor teams of teams.csv). A team that cannot be an owner (secret, or without access) has no rule here, and its
+# file needs only the owners' approval: ci-duty, documentation-wg, fulfillment-wg, observability-wg, org-admins, personas-wg.
+#
+# Every pull request also needs an approval of github-config-owners (the ruleset "owner-review" in repositories.tf), which
+# CODEOWNERS cannot say: it takes one owner per path, not two.
+
+/team-members/architects.csv @osac-project/architects
+/team-members/contributors.csv @osac-project/contributors
+/team-members/managers.csv @osac-project/managers
+/team-members/wg-architecture.csv @osac-project/wg-architecture
+/team-members/wg-bmaas.csv @osac-project/wg-bmaas
+/team-members/wg-caas.csv @osac-project/wg-caas
+/team-members/wg-connectivity.csv @osac-project/wg-connectivity
+/team-members/wg-core.csv @osac-project/wg-core
+/team-members/wg-e2e.csv @osac-project/wg-e2e
+/team-members/wg-enclave.csv @osac-project/wg-enclave
+/team-members/wg-infra.csv @osac-project/wg-infra
+/team-members/wg-leads.csv @osac-project/wg-leads
+/team-members/wg-maas.csv @osac-project/wg-maas
+/team-members/wg-metering.csv @osac-project/wg-metering
+/team-members/wg-qe.csv @osac-project/wg-qe
+/team-members/wg-soln-eng.csv @osac-project/wg-soln-eng
+/team-members/wg-storage.csv @osac-project/wg-storage
+/team-members/wg-ui.csv @osac-project/wg-ui
+/team-members/wg-vmaas.csv @osac-project/wg-vmaas

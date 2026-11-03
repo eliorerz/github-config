@@ -55,13 +55,63 @@ module "repo_github_config" {
   ]
   ruleset_bypass_team_ids = [github_team.all["managers"].id]
 
+  # An approval of a code owner is needed where CODEOWNERS names one (a team file needs its team, see CODEOWNERS).
+  require_code_owner_reviews = true
+
   contributor_teams = local.contributor_teams
   teams = [
     {
       team_id    = github_team.all["managers"].name
       permission = "admin"
+    },
+    {
+      team_id    = github_team.all["github-config-owners"].name
+      permission = "push"
     }
   ]
+}
+
+# Every pull request to github-config needs an approval of github-config-owners, whatever files it changes. CODEOWNERS cannot
+# say "this team AND that team" (one owner per path is enough), so the team files get their own team from CODEOWNERS and this
+# ruleset adds the owners on top. The author of a pull request cannot approve it, so a pull request of an owner is approved by
+# someone else, or merged by an organization admin, who may bypass the ruleset like the status checks one. Required
+# reviewers is a beta feature of GitHub rulesets.
+resource "github_repository_ruleset" "github_config_owner_review" {
+  name        = "owner-review"
+  repository  = "github-config"
+  target      = "branch"
+  enforcement = "active"
+
+  bypass_actors {
+    actor_id    = 1
+    actor_type  = "OrganizationAdmin"
+    bypass_mode = "always"
+  }
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+  }
+
+  rules {
+    pull_request {
+      required_approving_review_count = 0
+
+      required_reviewers {
+        minimum_approvals = 1
+        file_patterns     = ["**"]
+
+        reviewer {
+          id   = tonumber(github_team.all["github-config-owners"].id)
+          type = "Team"
+        }
+      }
+    }
+  }
+
+  depends_on = [module.repo_github_config]
 }
 
 module "repo_dotgithub_private" {
